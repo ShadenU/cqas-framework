@@ -1,0 +1,106 @@
+# CQAS Anomaly Detection Thresholds
+# Statistical thresholds for behavioral anomaly detection
+
+global:
+  baseline_window_days: 30
+  z_score_threshold: 2.5
+  min_data_points: 100
+  evaluation_interval_minutes: 15
+
+thresholds:
+  failed_logins:
+    description: "Failed authentication attempts per user per hour"
+    metric: failed_login_count
+    aggregation: count
+    window_minutes: 60
+    group_by: username
+    warning_z_score: 2.0
+    critical_z_score: 3.5
+    absolute_max: 50
+    cooldown_minutes: 30
+
+  network_traffic:
+    description: "Outbound network bytes per host per hour"
+    metric: bytes_sent
+    aggregation: sum
+    window_minutes: 60
+    group_by: src_ip
+    warning_z_score: 2.5
+    critical_z_score: 4.0
+    absolute_max_bytes: 1073741824  # 1 GB
+    cooldown_minutes: 60
+
+  inbound_traffic:
+    description: "Inbound network bytes per host per hour"
+    metric: bytes_received
+    aggregation: sum
+    window_minutes: 60
+    group_by: dst_ip
+    warning_z_score: 2.5
+    critical_z_score: 4.0
+    absolute_max_bytes: 2147483648  # 2 GB
+    cooldown_minutes: 60
+
+  process_creation:
+    description: "New process creation events per host per 15 minutes"
+    metric: process_count
+    aggregation: count
+    window_minutes: 15
+    group_by: hostname
+    warning_z_score: 2.0
+    critical_z_score: 3.0
+    absolute_max: 200
+    cooldown_minutes: 15
+
+  dns_queries:
+    description: "DNS query count per host per 5 minutes"
+    metric: dns_query_count
+    aggregation: count
+    window_minutes: 5
+    group_by: src_ip
+    warning_z_score: 2.5
+    critical_z_score: 4.0
+    absolute_max: 500
+    cooldown_minutes: 10
+
+  file_access:
+    description: "Sensitive file access events per user per hour"
+    metric: file_access_count
+    aggregation: count
+    window_minutes: 60
+    group_by: username
+    sensitive_paths:
+      - "/etc/passwd"
+      - "/etc/shadow"
+      - "C:\\Windows\\System32\\config"
+      - "/var/log/auth.log"
+    warning_z_score: 2.0
+    critical_z_score: 3.5
+    absolute_max: 100
+    cooldown_minutes: 30
+
+  authentication_sources:
+    description: "Distinct source IPs per user account per day"
+    metric: distinct_src_ip_count
+    aggregation: count_distinct
+    window_minutes: 1440
+    group_by: username
+    warning_threshold: 5
+    critical_threshold: 10
+    cooldown_minutes: 120
+
+  privilege_commands:
+    description: "Privileged command executions per user per hour"
+    metric: privileged_cmd_count
+    aggregation: count
+    window_minutes: 60
+    group_by: username
+    privileged_commands:
+      - "sudo"
+      - "su"
+      - "runas"
+      - "psexec"
+    warning_z_score: 2.0
+    critical_z_score: 3.0
+    absolute_max: 30
+    cooldown_minutes: 30

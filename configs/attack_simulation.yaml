@@ -1,0 +1,107 @@
+# CQAS Attack Simulation Scenarios
+# Used by EPTEngine for External Proficiency Testing
+
+scenarios:
+  port_scan:
+    name: "Horizontal Port Scan"
+    description: "Simulates Nmap-style horizontal scan of common ports across a subnet"
+    mitre_tactic: "TA0043"
+    mitre_technique: "T1046"
+    parameters:
+      target_subnet: "10.0.0.0/24"
+      ports: [22, 23, 80, 443, 445, 3389, 8080, 8443]
+      scan_rate_per_second: 100
+      duration_seconds: 30
+    expected_detections:
+      - rule_id: "CQAS-001"
+        max_detection_time_seconds: 90
+    success_criteria:
+      detection_required: true
+      max_false_negatives: 0
+
+  brute_force:
+    name: "SSH Brute Force Attack"
+    description: "Simulates repeated SSH authentication failures from a single IP"
+    mitre_tactic: "TA0006"
+    mitre_technique: "T1110.001"
+    parameters:
+      target_host: "10.0.0.50"
+      target_service: ssh
+      target_port: 22
+      attempts_per_minute: 30
+      duration_seconds: 120
+      usernames: ["admin", "root", "user", "test", "guest"]
+      password_list_size: 100
+    expected_detections:
+      - rule_id: "CQAS-002"
+        max_detection_time_seconds: 60
+    success_criteria:
+      detection_required: true
+      max_false_negatives: 0
+
+  lateral_movement:
+    name: "SMB Lateral Movement"
+    description: "Simulates WMI/SMB-based lateral movement between internal hosts"
+    mitre_tactic: "TA0008"
+    mitre_technique: "T1021.002"
+    parameters:
+      source_host: "10.0.1.100"
+      target_hosts:
+        - "10.0.1.10"
+        - "10.0.1.20"
+        - "10.0.1.30"
+        - "10.0.1.40"
+        - "10.0.1.50"
+      connection_interval_seconds: 15
+      protocol: smb
+      port: 445
+    expected_detections:
+      - rule_id: "CQAS-004"
+        max_detection_time_seconds: 180
+    success_criteria:
+      detection_required: true
+      max_false_negatives: 0
+
+  data_exfiltration:
+    name: "Large Data Exfiltration"
+    description: "Simulates staging and exfiltration of large file over HTTP"
+    mitre_tactic: "TA0010"
+    mitre_technique: "T1048.003"
+    parameters:
+      source_host: "10.0.0.200"
+      destination_ip: "198.51.100.10"
+      destination_port: 443
+      transfer_size_mb: 150
+      protocol: https
+      duration_seconds: 600
+    expected_detections:
+      - rule_id: "CQAS-005"
+        max_detection_time_seconds: 3700
+    success_criteria:
+      detection_required: true
+      max_false_negatives: 0
+
+  dns_tunneling:
+    name: "DNS Tunneling C2"
+    description: "Simulates command and control communication over DNS"
+    mitre_tactic: "TA0011"
+    mitre_technique: "T1071.004"
+    parameters:
+      source_host: "10.0.0.150"
+      c2_domain: "malicious.example.com"
+      query_rate_per_minute: 120
+      avg_query_length: 120
+      duration_seconds: 120
+    expected_detections:
+      - rule_id: "CQAS-007"
+        max_detection_time_seconds: 90
+    success_criteria:
+      detection_required: true
+      max_false_negatives: 0
+
+simulation_settings:
+  dry_run: true
+  log_output: true
+  output_directory: "data/attack_simulations"
+  report_format: json
+  cleanup_after_run: true

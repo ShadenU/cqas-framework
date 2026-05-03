@@ -1,0 +1,95 @@
+version: "3.8"
+
+services:
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.17.9
+    container_name: cqas-elasticsearch
+    environment:
+      - discovery.type=single-node
+      - ES_JAVA_OPTS=-Xms512m -Xmx512m
+      - xpack.security.enabled=false
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    volumes:
+      - es_data:/usr/share/elasticsearch/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9200"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    networks:
+      - cqas-net
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:7.17.9
+    container_name: cqas-kibana
+    ports:
+      - "5601:5601"
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    networks:
+      - cqas-net
+
+  logstash:
+    image: docker.elastic.co/logstash/logstash:7.17.9
+    container_name: cqas-logstash
+    ports:
+      - "5044:5044"
+      - "9600:9600"
+    volumes:
+      - ./configs:/usr/share/logstash/pipeline/configs:ro
+    environment:
+      - LS_JAVA_OPTS=-Xms256m -Xmx256m
+      - ELASTICSEARCH_HOST=http://elasticsearch:9200
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    networks:
+      - cqas-net
+
+  grafana:
+    image: grafana/grafana:9.5.2
+    container_name: cqas-grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=cqas_admin
+      - GF_USERS_ALLOW_SIGN_UP=false
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./dashboards:/etc/grafana/provisioning/dashboards:ro
+    networks:
+      - cqas-net
+
+  cqas-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: cqas-app
+    environment:
+      - SIEM_HOST=elasticsearch
+      - SIEM_PORT=9200
+      - SIEM_INDEX=security-events
+      - LOG_LEVEL=INFO
+    env_file:
+      - .env
+    volumes:
+      - ./data:/app/data
+      - ./configs:/app/configs:ro
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    networks:
+      - cqas-net
+
+volumes:
+  es_data:
+  grafana_data:
+
+networks:
+  cqas-net:
+    driver: bridge

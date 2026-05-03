@@ -1,0 +1,107 @@
+# CQAS Escalation Policies
+# Defines severity levels, response times, and notification channels
+
+severity_levels:
+  critical:
+    score_range: [0.85, 1.0]
+    description: "Active compromise or imminent threat requiring immediate response"
+    response_time_minutes: 15
+    auto_escalate: true
+    notification_channels:
+      - type: pagerduty
+        urgency: high
+      - type: slack
+        channel: "#soc-critical"
+        mention: "@oncall-soc"
+      - type: email
+        recipients:
+          - soc-lead@example.com
+          - ciso@example.com
+        priority: high
+      - type: sms
+        recipients:
+          - "+15551234567"
+    sla_breach_action: "escalate_to_management"
+    ticket_priority: P1
+    playbook: "critical_incident_response"
+
+  high:
+    score_range: [0.65, 0.85]
+    description: "Significant threat requiring urgent investigation"
+    response_time_minutes: 60
+    auto_escalate: false
+    notification_channels:
+      - type: slack
+        channel: "#soc-high"
+        mention: "@soc-team"
+      - type: email
+        recipients:
+          - soc-team@example.com
+        priority: high
+      - type: jira
+        project: "SEC"
+        issue_type: "Security Incident"
+        priority: High
+    sla_breach_action: "escalate_to_critical"
+    ticket_priority: P2
+    playbook: "high_severity_investigation"
+
+  medium:
+    score_range: [0.40, 0.65]
+    description: "Moderate threat requiring investigation within the shift"
+    response_time_minutes: 240
+    auto_escalate: false
+    notification_channels:
+      - type: slack
+        channel: "#soc-medium"
+      - type: email
+        recipients:
+          - soc-team@example.com
+        priority: normal
+      - type: jira
+        project: "SEC"
+        issue_type: "Security Alert"
+        priority: Medium
+    sla_breach_action: "escalate_to_high"
+    ticket_priority: P3
+    playbook: "standard_investigation"
+
+  low:
+    score_range: [0.0, 0.40]
+    description: "Low-priority informational alert for review during business hours"
+    response_time_minutes: 1440
+    auto_escalate: false
+    notification_channels:
+      - type: jira
+        project: "SEC"
+        issue_type: "Security Alert"
+        priority: Low
+    sla_breach_action: "log_and_close"
+    ticket_priority: P4
+    playbook: "low_priority_review"
+
+escalation_rules:
+  repeated_medium_alerts:
+    description: "Escalate to high if same source triggers 3+ medium alerts in 1 hour"
+    condition:
+      severity: medium
+      count: 3
+      window_minutes: 60
+      group_by: src_ip
+    escalate_to: high
+
+  unacknowledged_high:
+    description: "Escalate unacknowledged high alerts after 30 minutes"
+    condition:
+      severity: high
+      acknowledged: false
+      age_minutes: 30
+    escalate_to: critical
+
+  after_hours_critical:
+    description: "Page on-call immediately for critical alerts outside business hours"
+    condition:
+      severity: critical
+      outside_hours: "08:00-18:00"
+      timezone: "UTC"
+    action: "page_oncall_immediately"

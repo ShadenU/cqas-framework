@@ -1,0 +1,132 @@
+# CQAS Baseline Profiles
+# Normal behavior profiles for different asset types used in anomaly detection
+
+profiles:
+  workstation:
+    description: "Standard employee workstation"
+    applicable_to:
+      - asset_type: workstation
+      - asset_type: laptop
+    metrics:
+      network_bytes_out_per_hour:
+        mean: 52428800       # 50 MB
+        std_dev: 26214400    # 25 MB
+        max_normal: 209715200  # 200 MB
+      network_bytes_in_per_hour:
+        mean: 104857600      # 100 MB
+        std_dev: 52428800    # 50 MB
+        max_normal: 524288000  # 500 MB
+      failed_logins_per_hour:
+        mean: 0.5
+        std_dev: 1.0
+        max_normal: 5
+      process_creation_per_15min:
+        mean: 12
+        std_dev: 8
+        max_normal: 60
+      dns_queries_per_5min:
+        mean: 25
+        std_dev: 15
+        max_normal: 150
+      distinct_dst_ips_per_hour:
+        mean: 30
+        std_dev: 20
+        max_normal: 150
+      privileged_commands_per_hour:
+        mean: 1
+        std_dev: 2
+        max_normal: 10
+
+  server:
+    description: "General purpose application or web server"
+    applicable_to:
+      - asset_type: server
+      - asset_type: virtual_machine
+    metrics:
+      network_bytes_out_per_hour:
+        mean: 524288000       # 500 MB
+        std_dev: 262144000    # 250 MB
+        max_normal: 2147483648  # 2 GB
+      network_bytes_in_per_hour:
+        mean: 1073741824      # 1 GB
+        std_dev: 536870912    # 512 MB
+        max_normal: 5368709120  # 5 GB
+      failed_logins_per_hour:
+        mean: 5
+        std_dev: 5
+        max_normal: 50
+      process_creation_per_15min:
+        mean: 30
+        std_dev: 15
+        max_normal: 200
+      dns_queries_per_5min:
+        mean: 100
+        std_dev: 50
+        max_normal: 500
+      distinct_dst_ips_per_hour:
+        mean: 200
+        std_dev: 100
+        max_normal: 1000
+      privileged_commands_per_hour:
+        mean: 5
+        std_dev: 5
+        max_normal: 50
+
+  dc:
+    description: "Domain Controller or critical infrastructure server"
+    applicable_to:
+      - asset_type: domain_controller
+      - asset_type: critical_infrastructure
+    metrics:
+      network_bytes_out_per_hour:
+        mean: 1073741824      # 1 GB
+        std_dev: 536870912    # 512 MB
+        max_normal: 10737418240  # 10 GB
+      network_bytes_in_per_hour:
+        mean: 2147483648      # 2 GB
+        std_dev: 1073741824   # 1 GB
+        max_normal: 21474836480  # 20 GB
+      failed_logins_per_hour:
+        mean: 20
+        std_dev: 15
+        max_normal: 200
+      process_creation_per_15min:
+        mean: 50
+        std_dev: 25
+        max_normal: 400
+      dns_queries_per_5min:
+        mean: 500
+        std_dev: 200
+        max_normal: 2000
+      distinct_dst_ips_per_hour:
+        mean: 500
+        std_dev: 200
+        max_normal: 3000
+      privileged_commands_per_hour:
+        mean: 20
+        std_dev: 10
+        max_normal: 100
+      ldap_queries_per_hour:
+        mean: 1000
+        std_dev: 500
+        max_normal: 5000
+
+  network_device:
+    description: "Firewall, router, or switch"
+    applicable_to:
+      - asset_type: firewall
+      - asset_type: router
+      - asset_type: switch
+    metrics:
+      connections_per_minute:
+        mean: 500
+        std_dev: 300
+        max_normal: 5000
+      denied_connections_per_hour:
+        mean: 200
+        std_dev: 150
+        max_normal: 2000
+      config_changes_per_day:
+        mean: 2
+        std_dev: 2
+        max_normal: 20
