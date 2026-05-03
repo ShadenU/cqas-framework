@@ -1,0 +1,158 @@
+# CQAS SIEM Detection Rules
+# Format: rule_id, name, description, conditions, severity, mitre_tactic
+
+rules:
+  - rule_id: "CQAS-001"
+    name: "Port Scan Detection"
+    description: "Detects horizontal or vertical port scanning activity from a single source"
+    enabled: true
+    severity: medium
+    mitre_tactic: "TA0043"  # Reconnaissance
+    mitre_technique: "T1046"  # Network Service Discovery
+    conditions:
+      event_type: network
+      threshold:
+        field: dst_port
+        count: 20
+        window_seconds: 60
+        aggregation: count_distinct
+      source_field: src_ip
+    timeframe_seconds: 60
+    tags:
+      - reconnaissance
+      - network_scan
+
+  - rule_id: "CQAS-002"
+    name: "Brute Force Login Attack"
+    description: "Detects repeated failed authentication attempts from a single source"
+    enabled: true
+    severity: high
+    mitre_tactic: "TA0006"  # Credential Access
+    mitre_technique: "T1110"  # Brute Force
+    conditions:
+      event_type: authentication
+      action: failure
+      threshold:
+        field: event_id
+        count: 10
+        window_seconds: 300
+      source_field: src_ip
+    timeframe_seconds: 300
+    tags:
+      - credential_access
+      - brute_force
+
+  - rule_id: "CQAS-003"
+    name: "Malware Download via HTTP"
+    description: "Detects HTTP downloads of known malicious file types or from suspicious domains"
+    enabled: true
+    severity: critical
+    mitre_tactic: "TA0011"  # Command and Control
+    mitre_technique: "T1105"  # Ingress Tool Transfer
+    conditions:
+      event_type: network
+      protocol: http
+      match_any:
+        - field: url
+          pattern: "\\.(exe|ps1|vbs|bat|cmd|dll|msi|hta)$"
+        - field: http_response_code
+          value: 200
+          combined_with:
+            field: file_mime_type
+            value: "application/octet-stream"
+    timeframe_seconds: 1
+    tags:
+      - malware
+      - c2
+      - download
+
+  - rule_id: "CQAS-004"
+    name: "Lateral Movement via SMB"
+    description: "Detects potential lateral movement using SMB protocol between internal hosts"
+    enabled: true
+    severity: high
+    mitre_tactic: "TA0008"  # Lateral Movement
+    mitre_technique: "T1021.002"  # Remote Services: SMB/Windows Admin Shares
+    conditions:
+      event_type: network
+      protocol: smb
+      dst_port: 445
+      threshold:
+        field: dst_ip
+        count: 5
+        window_seconds: 120
+        aggregation: count_distinct
+      source_field: src_ip
+      filter:
+        src_ip_range: "10.0.0.0/8,172.16.0.0/12,192.168.0.0/16"
+        dst_ip_range: "10.0.0.0/8,172.16.0.0/12,192.168.0.0/16"
+    timeframe_seconds: 120
+    tags:
+      - lateral_movement
+      - smb
+
+  - rule_id: "CQAS-005"
+    name: "Data Exfiltration - Large Outbound Transfer"
+    description: "Detects unusually large data transfers to external IP addresses"
+    enabled: true
+    severity: critical
+    mitre_tactic: "TA0010"  # Exfiltration
+    mitre_technique: "T1048"  # Exfiltration Over Alternative Protocol
+    conditions:
+      event_type: network
+      direction: outbound
+      threshold:
+        field: bytes_sent
+        aggregate: sum
+        value: 104857600  # 100 MB
+        window_seconds: 3600
+      source_field: src_ip
+      filter:
+        dst_ip_not_range: "10.0.0.0/8,172.16.0.0/12,192.168.0.0/16"
+    timeframe_seconds: 3600
+    tags:
+      - exfiltration
+      - data_loss
+
+  - rule_id: "CQAS-006"
+    name: "Privilege Escalation - Sudo Abuse"
+    description: "Detects unusual sudo command execution patterns"
+    enabled: true
+    severity: high
+    mitre_tactic: "TA0004"  # Privilege Escalation
+    mitre_technique: "T1548.003"  # Sudo and Sudo Caching
+    conditions:
+      event_type: process
+      command_contains: "sudo"
+      threshold:
+        field: event_id
+        count: 5
+        window_seconds: 60
+      source_field: username
+    timeframe_seconds: 60
+    tags:
+      - privilege_escalation
+      - sudo
+
+  - rule_id: "CQAS-007"
+    name: "DNS Tunneling Detection"
+    description: "Detects potential DNS tunneling via high query volume or long domain names"
+    enabled: true
+    severity: high
+    mitre_tactic: "TA0011"  # Command and Control
+    mitre_technique: "T1071.004"  # Application Layer Protocol: DNS
+    conditions:
+      event_type: dns
+      match_any:
+        - threshold:
+            field: query
+            count: 100
+            window_seconds: 60
+          source_field: src_ip
+        - field: query_length
+          operator: ">"
+          value: 100
+    timeframe_seconds: 60
+    tags:
+      - c2
+      - dns_tunneling

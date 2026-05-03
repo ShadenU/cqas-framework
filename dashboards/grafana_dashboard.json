@@ -1,0 +1,212 @@
+{
+  "__inputs": [],
+  "__requires": [
+    {"type": "grafana", "id": "grafana", "name": "Grafana", "version": "9.5.0"},
+    {"type": "datasource", "id": "elasticsearch", "name": "Elasticsearch", "version": "1.0.0"}
+  ],
+  "annotations": {"list": []},
+  "description": "CQAS Framework — Security Operations Quality Dashboard",
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "id": null,
+  "links": [],
+  "panels": [
+    {
+      "id": 1,
+      "title": "Detection Accuracy Rate (DAR)",
+      "type": "gauge",
+      "gridPos": {"h": 8, "w": 6, "x": 0, "y": 0},
+      "options": {
+        "reduceOptions": {"calcs": ["lastNotNull"]},
+        "orientation": "auto",
+        "textMode": "auto",
+        "colorMode": "thresholds",
+        "fieldOptions": {"calcs": ["lastNotNull"]}
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "min": 0,
+          "max": 100,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {"color": "red", "value": 0},
+              {"color": "yellow", "value": 80},
+              {"color": "green", "value": 95}
+            ]
+          }
+        }
+      },
+      "targets": [
+        {
+          "datasource": {"type": "elasticsearch"},
+          "query": "metric:dar",
+          "alias": "DAR %"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "title": "False Positive Rate (FPR)",
+      "type": "gauge",
+      "gridPos": {"h": 8, "w": 6, "x": 6, "y": 0},
+      "options": {
+        "reduceOptions": {"calcs": ["lastNotNull"]},
+        "orientation": "auto"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "min": 0,
+          "max": 100,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {"color": "green", "value": 0},
+              {"color": "yellow", "value": 5},
+              {"color": "red", "value": 15}
+            ]
+          }
+        }
+      },
+      "targets": [
+        {
+          "datasource": {"type": "elasticsearch"},
+          "query": "metric:fpr",
+          "alias": "FPR %"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "title": "Mean Time to Respond (MTTR)",
+      "type": "stat",
+      "gridPos": {"h": 8, "w": 6, "x": 12, "y": 0},
+      "options": {
+        "reduceOptions": {"calcs": ["mean"]},
+        "colorMode": "background"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "m",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {"color": "green", "value": 0},
+              {"color": "yellow", "value": 60},
+              {"color": "red", "value": 240}
+            ]
+          }
+        }
+      },
+      "targets": [
+        {
+          "datasource": {"type": "elasticsearch"},
+          "query": "metric:mttr",
+          "alias": "MTTR (min)"
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "title": "Overall Quality Score",
+      "type": "gauge",
+      "gridPos": {"h": 8, "w": 6, "x": 18, "y": 0},
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "min": 0,
+          "max": 100,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {"color": "red", "value": 0},
+              {"color": "orange", "value": 60},
+              {"color": "yellow", "value": 70},
+              {"color": "light-green", "value": 80},
+              {"color": "green", "value": 90}
+            ]
+          }
+        }
+      },
+      "targets": [
+        {
+          "datasource": {"type": "elasticsearch"},
+          "query": "metric:quality_score",
+          "alias": "Quality Score"
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "title": "Alert Severity Distribution",
+      "type": "piechart",
+      "gridPos": {"h": 10, "w": 12, "x": 0, "y": 8},
+      "options": {
+        "pieType": "pie",
+        "legend": {"displayMode": "table", "placement": "right"}
+      },
+      "targets": [
+        {
+          "datasource": {"type": "elasticsearch"},
+          "query": "index:security-events",
+          "alias": "{{severity}}",
+          "bucketAggs": [
+            {"type": "terms", "field": "severity.keyword", "id": "1"}
+          ],
+          "metrics": [{"type": "count", "id": "2"}]
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "title": "DAR Trend (30 days)",
+      "type": "timeseries",
+      "gridPos": {"h": 10, "w": 12, "x": 12, "y": 8},
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "min": 0,
+          "max": 100,
+          "custom": {"lineWidth": 2, "fillOpacity": 10}
+        }
+      },
+      "targets": [
+        {
+          "datasource": {"type": "elasticsearch"},
+          "query": "metric:dar",
+          "alias": "DAR %"
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "title": "IQC Results — Pass/Fail by IOC Type",
+      "type": "bargauge",
+      "gridPos": {"h": 8, "w": 24, "x": 0, "y": 18},
+      "options": {
+        "orientation": "horizontal",
+        "reduceOptions": {"calcs": ["lastNotNull"]}
+      },
+      "targets": [
+        {
+          "datasource": {"type": "elasticsearch"},
+          "query": "type:iqc_result",
+          "alias": "{{ioc_name}}"
+        }
+      ]
+    }
+  ],
+  "refresh": "5m",
+  "schemaVersion": 38,
+  "tags": ["cqas", "security", "soc"],
+  "templating": {"list": []},
+  "time": {"from": "now-30d", "to": "now"},
+  "timepicker": {},
+  "timezone": "browser",
+  "title": "CQAS Security Operations Quality",
+  "uid": "cqas-main-dashboard",
+  "version": 1
+}
